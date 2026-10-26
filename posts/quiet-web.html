@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>把博客搬回自己的服务器 — 暮土 · Terra Dusk</title>
+  <meta name="description" content="在别人的时间线上写作，就像在租来的房子里钉钉子。" />
+  <meta name="theme-color" content="#02040a" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='34%25' cy='30%25' r='75%25'%3E%3Cstop offset='0' stop-color='%23ffd9b8'/%3E%3Cstop offset='.45' stop-color='%23e08a54'/%3E%3Cstop offset='1' stop-color='%23132a45'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='30' fill='url(%23g)'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&family=Noto+Serif+SC:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/site.css" />
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <div class="progress" aria-hidden="true"><span></span></div>
+
+  <header class="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="../index.html" aria-label="暮土 Terra Dusk 首页">
+        <span class="brand__orb" aria-hidden="true"></span>
+        <span>暮土</span>
+        <span class="brand__latin">Terra Dusk</span>
+      </a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../index.html#writing" aria-current="page">写作</a>
+        <a href="../about.html">关于</a>
+        <a href="../index.html#notes">碎片</a>
+        <a href="../index.html#contact">联系</a>
+      </nav>
+      <div class="nav__right">
+        <span class="nav__clock"><i class="dot" aria-hidden="true"></i><time data-clock>--:--</time> 云南</span>
+        <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-links">菜单</button>
+        <a class="nav__cta" href="mailto:hi@bailiu.ink">订阅</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <article>
+      <header class="article__head wrap">
+        <a class="back" href="../index.html#writing">← 返回写作</a>
+        <p class="eyebrow">随笔 · 2026.06.02</p>
+        <h1>把博客搬回自己的服务器</h1>
+        <p class="article__lede">在别人的时间线上写作，就像在租来的房子里钉钉子——你总要先想一想，这面墙算不算你的。</p>
+        <div class="article__byline">
+          <span><b>白鎏</b></span>
+          <span>7 分钟阅读</span>
+          <span>写了一晚</span>
+        </div>
+      </header>
+
+      <div class="prose wrap">
+        <p>
+          我上一个博客建在一个很流行的平台上。界面漂亮，写完点发布就行，还有统计、评论、推荐。唯一的缺点是：每次平台改版，我的文章都会重新排版一次；每次我想加一行自己的代码，都要跟编辑器搏斗。
+        </p>
+        <p>
+          搬走的念头出现过很多次，都被「等有空的」压下去了。直到今年春天，那个平台宣布关闭旧版编辑器。我的三十几篇文章里，有九篇的脚注全部错位。那天晚上我决定：这面墙，我自己砌。
+        </p>
+
+        <h2 data-num="01">最小的配置</h2>
+        <p>
+          我给自己定了三个要求：打开快、能活十年、不需要维护。所以没有数据库，没有 CMS，没有构建步骤。文章就是 HTML 文件，样式就是一份 CSS，首页那颗地球是一段原生 WebGL。
+        </p>
+        <ul>
+          <li>一台 5 美元的 VPS，只跑一个静态文件服务器；</li>
+          <li>Caddy 负责 HTTPS 和压缩，配置文件一共五行；</li>
+          <li>本地写 Markdown，用一个十五行的脚本转成 HTML；</li>
+          <li>发布就是 <code>rsync</code>，回滚就是 Git。</li>
+        </ul>
+        <pre><code>bailiu.ink {
+    root * /var/www/dusk
+    encode gzip
+    file_server
+}</code></pre>
+        <p>
+          这就是全部。没有插件，没有依赖升级，没有「更新后站点白屏」的深夜。我第一次感觉到，网站可以是一件不会坏的东西。
+        </p>
+
+        <h2 data-num="02">关于速度</h2>
+        <p>
+          首页总大小约 1.6 MB，其中 90% 是地球的四张贴图。我犹豫过要不要把它们换成程序化生成的噪声，但试了两版都不好看。最后接受这个成本，并把贴图做了延迟加载：文字先出现，球体随后淡入。
+        </p>
+        <p>
+          没有 cookie 横幅，没有统计脚本，没有第三方字体阻塞——除了 Google Fonts，它会在加载失败时安静地退回系统字体。一个博客不需要知道你是谁。
+        </p>
+
+        <h2 data-num="03">写到没有读者</h2>
+        <p>
+          搬过来之后，阅读量掉了八成。推荐流量消失以后，每篇文章的读者从「几千个路过的人」变成了「几十个真正打开的人」。奇怪的是，我写得更认真了。
+        </p>
+        <p>
+          没有读者的写作，反而更接近写作本身。你不再为一个标题的点击率负责，只为一句话是否准确负责。偶尔收到一封邮件，说某一段他读了两遍——这比任何数据都让人高兴。
+        </p>
+        <p>
+          这大概就是自留地的意义：它不会让你更红，只会让你更久。
+        </p>
+      </div>
+
+      <footer class="article__foot wrap">
+        <div class="tags">
+          <span class="tag">随笔</span>
+          <span class="tag">独立网站</span>
+          <span class="tag">写作</span>
+        </div>
+        <nav class="pager" aria-label="上一篇与下一篇">
+          <a href="night-owl.html">
+            <span>上一篇</span>
+            <strong>深夜工作者的自白</strong>
+          </a>
+          <a class="is-next" href="slow-practice.html">
+            <span>下一篇</span>
+            <strong>关于「慢」的一点练习</strong>
+          </a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__grid">
+      <span class="footer__name">暮土 · Terra Dusk</span>
+      <span>© 2026 白鎏 · 由手写 HTML 与一个 WebGL 球体组成</span>
+      <span>球体外观参考 <a href="https://www.originkit.dev/components/terra-dusk" rel="noopener">Originkit / Terra Dusk</a></span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我用一个球体装下了整颗地球 — 暮土 · Terra Dusk</title>
+  <meta name="description" content="首页那颗会转的地球没有一丁点三维几何：一张铺满屏幕的四边形，和一个逐像素求解的球面方程。" />
+  <meta name="theme-color" content="#02040a" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='34%25' cy='30%25' r='75%25'%3E%3Cstop offset='0' stop-color='%23ffd9b8'/%3E%3Cstop offset='.45' stop-color='%23e08a54'/%3E%3Cstop offset='1' stop-color='%23132a45'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='30' fill='url(%23g)'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&family=Noto+Serif+SC:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/site.css" />
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <div class="progress" aria-hidden="true"><span></span></div>
+
+  <header class="nav">
+    <div class="wrap nav__inner">
+      <a class="brand" href="../index.html" aria-label="暮土 Terra Dusk 首页">
+        <span class="brand__orb" aria-hidden="true"></span>
+        <span>暮土</span>
+        <span class="brand__latin">Terra Dusk</span>
+      </a>
+      <nav class="nav__links" id="nav-links" aria-label="主导航">
+        <a href="../index.html#writing" aria-current="page">写作</a>
+        <a href="../about.html">关于</a>
+        <a href="../index.html#notes">碎片</a>
+        <a href="../index.html#contact">联系</a>
+      </nav>
+      <div class="nav__right">
+        <span class="nav__clock"><i class="dot" aria-hidden="true"></i><time data-clock>--:--</time> 云南</span>
+        <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-links">菜单</button>
+        <a class="nav__cta" href="mailto:hi@bailiu.ink">订阅</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <article>
+      <header class="article__head wrap">
+        <a class="back" href="../index.html#writing">← 返回写作</a>
+        <p class="eyebrow">代码 · 2026.09.28</p>
+        <h1>我用一个球体装下了整颗地球</h1>
+        <p class="article__lede">首页那颗会转的地球，其实没有一丁点三维几何。它是一张铺满屏幕的四边形，和一个逐像素求解的球面方程。</p>
+        <div class="article__byline">
+          <span><b>白鎏</b></span>
+          <span>9 分钟阅读</span>
+          <span>WebGL · GLSL</span>
+        </div>
+      </header>
+
+      <div class="prose wrap">
+        <p>
+          我很喜欢那种「看起来用了很多资源，其实只用了很少资源」的东西。首页这颗地球就是其中之一：它没有模型文件，没有贴图球，没有光照系统，甚至没有相机。整个画面由一个三角形带绘制出来——四个顶点，两张三角形，而已。
+        </p>
+
+        <h2 data-num="01">没有几何体的球</h2>
+        <p>
+          关键在于：球体不需要被建模，它可以被<strong>算出来</strong>。对屏幕上的每一个像素，把它换算成以球心为原点、半径为一的坐标 <code>p</code>。只要 <code>|p| &lt; 1</code>，这个像素就在球内，而它的深度可以由单位球方程直接得到。
+        </p>
+        <pre><code>vec2 p = (gl_FragCoord.xy - center) / (0.5 * uSize);
+float z = sqrt(max(1.0 - dot(p, p), 0.0));
+vec3 n = vec3(p, z);          // 指向观察者的球面法线</code></pre>
+        <p>
+          <code>n</code> 就是这一点的法线：屏幕上的位置决定经度和纬度，<code>z</code> 决定它离镜头有多近。边缘处 <code>z</code> 趋近于零，法线越来越侧向，正好形成真实球体的轮廓衰减。没有透视矩阵，没有顶点插值，只有每个像素的一点算术。
+        </p>
+
+        <h2 data-num="02">把地图贴上去</h2>
+        <p>
+          有了法线，投一张等距圆柱投影（equirectangular）的地球贴图就只是两个反三角函数。先按地轴倾角转一下，再按自转时间转一下，得到「地图空间」里的方向 <code>m</code>：
+        </p>
+        <pre><code>float lat = asin(clamp(m.y, -1.0, 1.0));
+float lon = atan(m.x, m.z);
+vec2 uv = vec2(lon / 6.2831853 + 0.5, 0.5 - lat / 3.1415926);</code></pre>
+        <p>
+          注意 <code>0.5 - lat / π</code>：图片的第一行是北极，而纹理坐标的零点也在上方，两边对齐之后地球才不会上下颠倒。这类小地方错了不会报错，只会让整个画面悄悄变得不对劲。
+        </p>
+
+        <h2 data-num="03">让城市在夜里亮起来</h2>
+        <p>
+          昼夜不是两张贴图的淡入淡出，而是同一束光的结果。太阳方向 <code>L</code> 与法线的点积决定这一点的明暗，再用一个很窄的 <code>smoothstep</code> 把它切成夜面、晨昏线和白昼：
+        </p>
+        <pre><code>float ndl = dot(n, L);
+float day = smoothstep(-0.10, 0.30, ndl);
+surf += vec3(1.0, 0.58, 0.26) * city * (1.0 - day) * uLights;</code></pre>
+        <p>
+          夜面的城市灯光用一张单独的贴图，只取亮度，乘上暖橙色。因为 <code>day</code> 是连续过渡的，灯光会沿着晨昏线一点点浮现，而不是突然被打开。
+        </p>
+        <p>
+          云层是另一张带透明通道的贴图。它比地面转得稍微快一点，采样时再朝太阳方向偏移一点点，就得到了云投在地面上的影子。这个偏移只有几个像素，但它让整颗星球突然有了厚度。
+        </p>
+
+        <h2 data-num="04">一点余量</h2>
+        <p>
+          最难的部分不是数学，是<strong>克制</strong>。最早的版本里我加了镜头光晕、色差、胶片颗粒和一堆闪烁的星星，结果像一张过度后期的太空壁纸。后来一项一项删掉，只留下大气边缘、一点暖色的晨昏线和一层很淡的暗角。
+        </p>
+        <p>
+          最后一步是色调映射。所有光照在线性空间里算，输出前过一遍 ACES 曲线，再做伽马编码。高光不会直接烧成死白，蓝色的大气边缘也能保留层次——那颗球看起来「有空气」，很大程度上是因为这一行。
+        </p>
+        <p>
+          地表贴图来自 NASA 的 Blue Marble 系列，通过 three.js 的示例资源取得。整个渲染器不到四百行，没有依赖，在手机上也能跑满帧。如果你也想做一颗，从这里开始就够了。
+        </p>
+      </div>
+
+      <footer class="article__foot wrap">
+        <div class="tags">
+          <span class="tag">代码</span>
+          <span class="tag">WebGL</span>
+          <span class="tag">着色器</span>
+          <span class="tag">地球</span>
+        </div>
+        <nav class="pager" aria-label="上一篇与下一篇">
+          <a href="slow-practice.html">
+            <span>上一篇</span>
+            <strong>关于「慢」的一点练习</strong>
+          </a>
+          <a class="is-next" href="night-owl.html">
+            <span>下一篇</span>
+            <strong>深夜工作者的自白</strong>
+          </a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer__grid">
+      <span class="footer__name">暮土 · Terra Dusk</span>
+      <span>© 2026 白鎏 · 由手写 HTML 与一个 WebGL 球体组成</span>
+      <span>球体外观参考 <a href="https://www.originkit.dev/components/terra-dusk" rel="noopener">Originkit / Terra Dusk</a></span>
+    </div>
+  </footer>
+
+  <script src="../assets/js/site.js" defer></script>
+</body>
+</html>
