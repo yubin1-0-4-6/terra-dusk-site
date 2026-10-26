@@ -1,0 +1,34 @@
+# 换行符：仓库和检出统一用 LF
+# 之前 Windows 的 core.autocrlf=true 会让同一份文件在不同机器上产生整文件 diff，
+# 这一行把它固定住，Windows / macOS / Linux 检出结果一致。
+* text=auto eol=lf
+
+# 源码与文案显式声明为文本，避免被 *.png 之类的规则或误判影响
+*.html   text eol=lf
+*.css    text eol=lf
+*.js     text eol=lf
+*.mjs    text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+*.svg    text eol=lf
+*.txt    text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+
+# 二进制资源：不做换行转换，git diff 里也不显示为文本改动
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.avif  binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.mp3   binary
+*.mp4   binary
+*.webm  binary
