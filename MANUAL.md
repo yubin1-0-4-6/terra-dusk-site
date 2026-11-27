@@ -212,7 +212,7 @@ section.contact
 `index.html` 的 `.hero__copy`：
 
 ```html
-<p class="eyebrow">个人博客 · 云南 · 自 2019</p>
+<p class="eyebrow">个人博客 · 云南 · 自 2026</p>
 <h1 id="hero-title">在地球的<em>夜面</em>，<br />写一点慢的东西。</h1>
 <p class="hero__lede">我是白鎏，白天做界面，夜里写字。……</p>
 ```
