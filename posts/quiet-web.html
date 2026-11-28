@@ -3,10 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>把博客搬回自己的服务器 — 暮土 · Terra Dusk</title>
+  <title>把博客搬回自己手里 — 暮土 · Terra Dusk</title>
   <meta name="description" content="在别人的时间线上写作，就像在租来的房子里钉钉子。" />
   <meta name="theme-color" content="#02040a" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='34%25' cy='30%25' r='75%25'%3E%3Cstop offset='0' stop-color='%23ffd9b8'/%3E%3Cstop offset='.45' stop-color='%23e08a54'/%3E%3Cstop offset='1' stop-color='%23132a45'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='30' fill='url(%23g)'/%3E%3C/svg%3E" />
+  <meta property="og:site_name" content="暮土 · Terra Dusk" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://yubin1-0-4-6.github.io/terra-dusk-site/posts/quiet-web.html" />
+  <meta property="og:title" content="把博客搬回自己手里 — 暮土 · Terra Dusk" />
+  <meta property="og:description" content="在别人的时间线上写作，就像在租来的房子里钉钉子。" />
+  <meta property="og:image" content="https://yubin1-0-4-6.github.io/terra-dusk-site/assets/og.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="暮土 · Terra Dusk 首页：地球与标题" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500&family=Noto+Serif+SC:wght@400;500&display=swap" rel="stylesheet" />
@@ -42,7 +53,7 @@
       <header class="article__head wrap">
         <a class="back" href="../index.html#writing">← 返回写作</a>
         <p class="eyebrow">随笔 · 2026.06.02</p>
-        <h1>把博客搬回自己的服务器</h1>
+        <h1>把博客搬回自己手里</h1>
         <p class="article__lede">在别人的时间线上写作，就像在租来的房子里钉钉子——你总要先想一想，这面墙算不算你的。</p>
         <div class="article__byline">
           <span><b>白鎏</b></span>
@@ -64,16 +75,14 @@
           我给自己定了三个要求：打开快、能活十年、不需要维护。所以没有数据库，没有 CMS，没有构建步骤。文章就是 HTML 文件，样式就是一份 CSS，首页那颗地球是一段原生 WebGL。
         </p>
         <ul>
-          <li>一台 5 美元的 VPS，只跑一个静态文件服务器；</li>
-          <li>Caddy 负责 HTTPS 和压缩，配置文件一共五行；</li>
-          <li>本地写 Markdown，用一个十五行的脚本转成 HTML；</li>
-          <li>发布就是 <code>rsync</code>，回滚就是 Git。</li>
+          <li>纯静态文件：文章是 HTML，样式是一份 CSS，首页那颗地球是一段原生 WebGL；</li>
+          <li>托管在 GitHub Pages：免费、自动 HTTPS、自带 CDN，构建不用我操心；</li>
+          <li>本地直接手写 HTML，没有构建脚本，也没有依赖升级；</li>
+          <li>发布就是 <code>git push</code>，回滚就是 <code>git revert</code>。</li>
         </ul>
-        <pre><code>bailiu.ink {
-    root * /var/www/dusk
-    encode gzip
-    file_server
-}</code></pre>
+        <pre><code>git add -A
+git commit -m "新文章"
+git push</code></pre>
         <p>
           这就是全部。没有插件，没有依赖升级，没有「更新后站点白屏」的深夜。我第一次感觉到，网站可以是一件不会坏的东西。
         </p>

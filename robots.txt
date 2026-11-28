@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yubin1-0-4-6.github.io/terra-dusk-site/sitemap.xml

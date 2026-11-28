@@ -1,0 +1,13 @@
+# GitHub Pages 用 Jekyll 构建这个仓库（legacy 源：main / 根目录）。
+# 这个文件只做一件事：把开发用的文件排除在发布产物之外，
+# 免得 MANUAL.md、check.mjs、截图之类的内部资料被人直接下载。
+# 站点本身零构建：没有布局、没有 include、没有 Liquid，HTML 原样发布。
+exclude:
+  - MANUAL.md
+  - README.md
+  - LICENSE
+  - check.mjs
+  - screenshots
+  - freebuff-sites-build
+  - .cloud-attachments
+  - .freebuff
