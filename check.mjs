@@ -280,7 +280,12 @@ try {
   await sleep(200);
   await mouse('mousePressed', dragged.x, dragged.y, { buttons: 1 });
   await mouse('mouseReleased', dragged.x, dragged.y, { buttons: 0 });
-  await sleep(1600);
+  /* 慢机器上缓动走得更久：先等它真的停下来，再量剩下的漂移 */
+  for (let i = 0; i < 100; i++) {
+    const before = await pinState();
+    await sleep(100);
+    if (Math.abs((await pinState()).x - before.x) < 0.5) break;
+  }
   const centred = await pinState();
   await sleep(600);
   const settled = await pinState();
