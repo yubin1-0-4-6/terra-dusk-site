@@ -73,25 +73,35 @@ VS Code、Neovim、任何纯文本编辑器都行。这个站点**不需要** np
 个人博客/
 ├── index.html              首页（唯一带地球的页面）
 ├── about.html              关于页
+├── 404.html                找不到页面（样式内联，任意路径下都能用）
 ├── MANUAL.md               ← 你正在读的手册
-├── check.mjs                自动化检查脚本（node check.mjs）
+├── README.md               仓库首页的说明
+├── LICENSE                 MIT
+├── check.mjs               自动化检查脚本（node check.mjs）
+├── favicon.svg             站点图标，6 个页面共用
+├── robots.txt              搜索引擎规则
+├── sitemap.xml             页面清单，加了新文章要补一条
+├── _config.yml             发布排除清单（§11.4）
+├── .github/workflows/
+│   └── check.yml           推送 main 时自动跑 check.mjs
 ├── posts/                   文章页
 │   ├── slow-practice.html    关于「慢」的一点练习
 │   ├── terra-dusk.html       我用一个球体装下了整颗地球
 │   ├── night-owl.html        深夜工作者的自白
-│   └── quiet-web.html        把博客搬回自己的服务器
+│   └── quiet-web.html        把博客搬回自己手里
 ├── assets/
 │   ├── css/
 │   │   └── site.css         全站唯一样式表（1787 行，按区块分节）
 │   ├── js/
 │   │   ├── site.js          通用交互：菜单、时钟、揭示、筛选、进度条
 │   │   └── globe.js         WebGL 地球（514 行）
+│   ├── og.jpg              分享卡片图（1200×630，从首页截图裁的）
 │   └── textures/            地球贴图
 │       ├── earth_atmos_2048.jpg    昼面（地表）
 │       ├── earth_lights_2048.png   夜面城市灯光
 │       ├── earth_clouds_1024.png   云层（带 alpha）
 │       └── earth_specular_2048.jpg 海洋高光 / 水体掩膜
-├── screenshots/             历史截图（不影响站点）
+├── screenshots/             历史截图（已在 _config.yml 里排除，不会上线）
 └── .freebuff/               本地工具产物（服务器日志等）
 ```
 
@@ -169,9 +179,9 @@ section.contact
 | 搜索结果摘要 | `<meta name="description">` |
 | 分享到微信/Twitter 时的标题与描述 | `og:title` / `og:description` |
 | 浏览器地址栏颜色（移动端） | `<meta name="theme-color" content="#02040a">` |
-| 站点图标 | `<link rel="icon" href="data:image/svg+xml,...">` —— 一段内联 SVG，整个网站所有页面共用同一段，改一处要改全部 6 个 HTML 文件 |
+| 站点图标 | `<link rel="icon" href="favicon.svg">` —— 6 个页面共用同一个文件，根目录页写 `favicon.svg`，文章页写 `../favicon.svg` |
 
-> **图标**：现在是一颗渐变球。想换成自己的，把 `href` 换成一个图片文件路径即可，例如 `<link rel="icon" href="assets/favicon.png">`，图片放 `assets/` 下。
+> **图标**：现在是一颗渐变球，画在 `favicon.svg` 里。想换成自己的，直接替换这个文件即可；如果改成别的文件名或放别的位置，记得 6 个页面的相对路径不一样（根目录页和 `posts/` 下各一套写法）。
 
 ### 4.2 品牌名「暮土 / Terra Dusk」
 
@@ -757,20 +767,21 @@ titles.forEach((title) => {
 
 不要在 `.prose` 里用 `<div>`（`max-width` 规则只作用于 `.prose > *`，结构变了宽度会乱）。
 
-### 8.4 发布一篇文章要做四件事
+### 8.4 发布一篇文章要做五件事
 
 1. **建文件**：`posts/xxx.html`（§8.2）
 2. **加进首页列表**：在 `index.html` 的 `<ol class="posts">` **最前面**插一段 `<li class="post">`（§4.7），记得 `data-tag` 和筛选按钮对得上
 3. **改上下篇**：新文章的 `<nav class="pager">` 里填上一/下一篇；**原来那篇**的 pager 也要把指向新文章的链接换掉
-4. **跑检查**：`node check.mjs`（§10）
+4. **补 sitemap**：在 `sitemap.xml` 里加一条 `<url>`，`lastmod` 写发布日期
+5. **跑检查**：`node check.mjs`（§10）—— 标题、日期、标签、分钟数、上下篇、sitemap 有任何一处对不上都会当场报出来
 
 ### 8.5 当前的上下篇关系（改之前先看这个）
 
 | 文章 | 上一篇 | 下一篇 |
 |---|---|---|
-| [slow-practice](posts/slow-practice.html) | 把博客搬回自己的服务器 | 我用一个球体装下了整颗地球 |
+| [slow-practice](posts/slow-practice.html) | 把博客搬回自己手里 | 我用一个球体装下了整颗地球 |
 | [terra-dusk](posts/terra-dusk.html) | 关于「慢」的一点练习 | 深夜工作者的自白 |
-| [night-owl](posts/night-owl.html) | 我用一个球体装下了整颗地球 | 把博客搬回自己的服务器 |
+| [night-owl](posts/night-owl.html) | 我用一个球体装下了整颗地球 | 把博客搬回自己手里 |
 | [quiet-web](posts/quiet-web.html) | 深夜工作者的自白 | 关于「慢」的一点练习 |
 
 （这是个环。加新文章时把它接进环里：让最老的一篇的「下一篇」指向新文章，新文章的「上一篇」指向最老的一篇。）
@@ -797,10 +808,11 @@ titles.forEach((title) => {
 
 ### 9.5 换了新文章，check.mjs 报筛选失败
 
-检查脚本里**写死**了"4 篇 → 筛出 1 篇 → 回到 4 篇"。文章数量变了要改脚本：
+脚本从页面里自己数「有几篇、每个标签几篇」，所以加文章不需要改脚本。它报错通常说明页面本身对不上：
 
-- [check.mjs:305](check.mjs#L305) —— `filter.start === 4 && filter.one === 1 && filter.back === 4`
-- [check.mjs:298](check.mjs#L298) —— 点的是 `[data-filter="代码"]`，这个按钮要还在
+- 首页的筛选按钮（`data-filter`）多了一个页面上没有的标签，或漏了一个正在用的标签；
+- 某篇文章的 `data-tag` 拼错了（例如写成 `代码 ` 带了个空格）；
+- 索引里某篇的标题/日期/标签/分钟数和正文页眉不一致——脚本会把两边的值打出来对照。
 
 ### 9.6 换了球体大小，占位图对不上
 
@@ -842,16 +854,17 @@ node check.mjs --verbose  # 附带每项的实测数字
 CHROME="/path/to/chrome" node check.mjs --verbose
 ```
 
-它检查 18 项：
+它检查 26 项：
 
 | 分组 | 检查项 |
 |---|---|
 | 地球 | 初始化成功、WebGL 上下文没丢 |
 | 光点 | 落在球盘内、悬停出地名、拖动跟着转、点击归位误差 < 2.5px、归位后不漂移、转到背面隐藏且不可点 |
-| 首页 | 标签筛选 4 → 1 → 4 |
+| 首页 | 每个筛选按钮都对得上一个正在用的标签；点每个标签后剩下的篇数等于页面上该标签的篇数（数字从页面读，不写死） |
 | 文章 | 阅读进度 0 → 0.5~0.75 |
 | 移动端 | 390 宽下地球照常渲染、无横向溢出、菜单按钮显示 |
 | 降级 | 无 WebGL 时球体报失败、静态占位可见、光点隐藏、无控制台报错 |
+| 一致性 | 首页列出的每篇都在 `posts/` 里、没有漏收的文章；索引的标题/日期/标签/分钟数与正文一致；上下篇指向的标题正确；没有死链或丢失的资源；`sitemap.xml` 覆盖全部页面 |
 | 全局 | 无控制台报错 |
 
 **任何一项失败，退出码就是 1**，可以直接接进 CI 或 git hook：
@@ -859,6 +872,8 @@ CHROME="/path/to/chrome" node check.mjs --verbose
 ```bash
 node check.mjs || exit 1
 ```
+
+仓库里已经接好了：`.github/workflows/check.yml` 会在每次推送到 `main`（以及开 PR）时跑同一份脚本。CI 里 Chrome 需要关 sandbox，脚本检测到 `CI` 环境变量会自动加 `--no-sandbox`。
 
 ### 10.2 手动过一遍
 
@@ -881,43 +896,46 @@ node check.mjs || exit 1
 
 这是一个纯静态站点，**没有任何服务端代码**。发布就是把整个文件夹丢到任何能托管静态文件的地方。
 
-### 11.2 用 Freebuff Sites（推荐）
+### 11.2 现在的方式：GitHub Pages
 
-1. 先在本地跑通 `node check.mjs`。
-2. 部署时把 `index.html` 作为入口，`assets/` 作为静态资源目录，`posts/`、`about.html` 原样带上。
+仓库 <https://github.com/yubin1-0-4-6/terra-dusk-site>（public），Pages 用的是 legacy 源：Settings → Pages → Source 选 `main` 分支 `/ (root)`。线上地址 <https://yubin1-0-4-6.github.io/terra-dusk-site/>。
 
-> 提示：`check.mjs` 和 `MANUAL.md` 属于开发工具，发布时可以不传。
+日常发布只有三步：
 
-### 11.3 用自己的服务器
+```bash
+git add -A
+git commit -m "新文章：xxx"
+git push
+```
+
+推送后 Pages 自动重建，一两分钟生效；回滚就是 `git revert` 再推一次。构建时 Jekyll 会跑一遍，但站点没有任何 Liquid 标签，HTML 原样输出（§11.4）。
+
+### 11.3 换别的地方托管
+
+同一份文件夹也能直接交给 nginx / Caddy / 任何静态托管：
 
 ```bash
 rsync -av --delete ./ user@host:/var/www/terra-dusk/
 ```
 
-或用 nginx / Caddy 直接指到这个目录。注意站点是**多页面**结构（`index.html`、`about.html`、`posts/*.html`），不需要任何重写规则。
+站点是**多页面**结构（`index.html`、`about.html`、`404.html`、`posts/*.html`），不需要任何重写规则；`404.html` 的样式是内联的，托管方把找不到的路径指过去就能用。
 
-### 11.4 GitHub Pages
+注意 `sitemap.xml`、`robots.txt` 和页面里的 `og:url` / `og:image` 都写死了 `yubin1-0-4-6.github.io/terra-dusk-site` 这个前缀，换域名要一起改。
 
-```bash
-git init
-git add .
-git commit -m "站点初版"
-git branch -M main
-git remote add origin git@github.com:<你的账号>/<仓库名>.git
-git push -u origin main
-```
+### 11.4 哪些文件不会上线
 
-然后在仓库 Settings → Pages → Source 选 `main` 分支 `/ (root)`。
-Pages 会把 `/posts/xxx.html` 当成 `/posts/xxx.html` 直出，和本地一致。
+`_config.yml` 里列了排除项：`MANUAL.md`、`README.md`、`LICENSE`、`check.mjs`、`screenshots/`、`.freebuff/`、`freebuff-sites-build/`、`.cloud-attachments/`。它们照常留在仓库里，但不会被发布出去。
+
+这个文件是 Jekyll 的配置，而站点本身**不使用任何 Jekyll 特性**——不要在 HTML 里写 `{{ }}` 或 `{% %}`，会被 Jekyll 当模板执行掉。新增内部文件（日志、脚本、备份）时，记得往 `exclude` 里补一行。
 
 ### 11.5 上线前检查清单
 
-- [ ] `node check.mjs` 全绿
+- [ ] `node check.mjs` 全绿（26 项，含页面之间的交叉检查）
 - [ ] 每个页面的 `<title>` 和 `<meta name="description">` 都改过了
+- [ ] 新文章加进了 `sitemap.xml`
 - [ ] 邮箱不是测试用的
 - [ ] 社交链接指向真实的账号
 - [ ] 版权年份是当前年份
-- [ ] 换掉 favicon（如果不想用现在那颗球）
 - [ ] 手机上看一眼：顶栏折叠、球体居中、没有横向滚动条
 
 ---
@@ -930,10 +948,11 @@ Pages 会把 `/posts/xxx.html` 当成 `/posts/xxx.html` 直出，和本地一致
 |---|---|---|---|
 | `index.html` | 暮土 · Terra Dusk — 白鎏的个人博客 | ✅ | ❌ |
 | `about.html` | 关于 — 暮土 · Terra Dusk | ❌ | ❌ |
+| `404.html` | 找不到这一页 — 暮土 · Terra Dusk | ❌ | ❌ |
 | `posts/slow-practice.html` | 关于「慢」的一点练习 | ❌ | ✅ |
 | `posts/terra-dusk.html` | 我用一个球体装下了整颗地球 | ❌ | ✅ |
 | `posts/night-owl.html` | 深夜工作者的自白 | ❌ | ✅ |
-| `posts/quiet-web.html` | 把博客搬回自己的服务器 | ❌ | ✅ |
+| `posts/quiet-web.html` | 把博客搬回自己手里 | ❌ | ✅ |
 
 ### 12.2 类名速查
 

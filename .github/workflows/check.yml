@@ -1,0 +1,27 @@
+name: check
+
+# 每次推送到 main 或开 PR 都跑一遍 check.mjs：
+# 冒烟测试（WebGL 地球、标签筛选、进度条、昆明光点、无 WebGL 降级）
+# 加上页面之间的一致性检查（索引 / 正文 / 上下页 / 死链 / sitemap）。
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # ubuntu 镜像自带 Google Chrome，check.mjs 直接用它，不需要 npm 依赖
+      - name: smoke test
+        env:
+          CHROME: /usr/bin/google-chrome
+          CI: '1'
+        run: node check.mjs --verbose

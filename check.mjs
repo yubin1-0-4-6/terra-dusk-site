@@ -11,7 +11,7 @@
   No npm packages, no running server: it starts its own on a random port.
 */
 import http from 'node:http';
-import { createReadStream, existsSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -81,6 +81,8 @@ async function launchBrowser(extraArgs = []) {
       '--no-first-run',
       '--no-default-browser-check',
       '--disable-background-networking',
+      // GitHub Actions 的 runner 里 Chrome 起不来除非关掉 sandbox
+      ...(process.env.CI ? ['--no-sandbox'] : []),
       ...extraArgs,
       'about:blank',
     ],
@@ -292,18 +294,32 @@ try {
     `opacity ${back.opacity.toFixed(2)}, pointer ${back.pointer}`);
 
   /* ---------- tag filter ---------- */
-  const filter = await evaluate(`(async () => {
-    const visible = () => document.querySelectorAll('.post:not([hidden])').length;
-    const start = visible();
-    document.querySelector('[data-filter="代码"]').click();
-    await new Promise((r) => setTimeout(r, 250));
-    const one = visible();
-    document.querySelector('[data-filter="all"]').click();
-    await new Promise((r) => setTimeout(r, 250));
-    return { start, one, back: visible() };
+  /* the expectations come from the page itself: adding a fifth post never breaks this */
+  const expected = await evaluate(`(() => {
+    const posts = [...document.querySelectorAll('.post[data-tag]')];
+    const byTag = {};
+    for (const post of posts) byTag[post.dataset.tag] = (byTag[post.dataset.tag] || 0) + 1;
+    const chips = [...document.querySelectorAll('[data-filter]')]
+      .map((b) => b.dataset.filter)
+      .filter((tag) => tag !== 'all');
+    return { total: posts.length, byTag, chips };
   })()`);
-  check('tag filter narrows and restores', filter.start === 4 && filter.one === 1 && filter.back === 4,
-    `${filter.start} → ${filter.one} → ${filter.back}`);
+  const filtered = await evaluate(`(async () => {
+    const visible = () => document.querySelectorAll('.post:not([hidden])').length;
+    const out = {};
+    for (const chip of document.querySelectorAll('[data-filter]')) {
+      chip.click();
+      await new Promise((r) => setTimeout(r, 200));
+      out[chip.dataset.filter] = visible();
+    }
+    return out;
+  })()`);
+  check('every tag chip matches a tag in use', expected.chips.length > 0 &&
+    expected.chips.every((tag) => expected.byTag[tag] > 0),
+    `chips ${expected.chips.join('/')} vs tags ${Object.keys(expected.byTag).join('/')}`);
+  check('tag filter narrows each tag and restores', filtered.all === expected.total &&
+    expected.chips.every((tag) => filtered[tag] === expected.byTag[tag]),
+    `${expected.total} → ${JSON.stringify(expected.byTag)} / got ${JSON.stringify(filtered)}`);
 
   /* ---------- reading progress ---------- */
   await goto('/posts/terra-dusk.html?check=1');
@@ -398,6 +414,94 @@ try {
   } finally {
     await degraded.close();
   }
+
+  /* ---------- the pages agree with each other ---------- */
+  /* Everything below is offline: it reads the files the browser never has to see. */
+  const readPage = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
+  const flat = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const postFiles = readdirSync(path.join(ROOT, 'posts')).filter((f) => f.endsWith('.html')).sort();
+  const home = readPage('index.html');
+
+  const entries = [...home.matchAll(/<a class="post__link" href="posts\/([^"]+)">([\s\S]*?)<\/a>/g)].map(
+    ([, file, body]) => ({
+      file,
+      title: flat(/<h3 class="post__title">([\s\S]*?)<\/h3>/.exec(body)?.[1] || ''),
+      date: /post__meta">([\d.]+)/.exec(body)?.[1],
+      tag: /<b>([^<]+)<\/b>/.exec(body)?.[1],
+      minutes: /·\s*(\d+)\s*分钟/.exec(body)?.[1],
+    })
+  );
+
+  const page = (file) => {
+    const html = readPage(`posts/${file}`);
+    return {
+      h1: flat(/<h1>([\s\S]*?)<\/h1>/.exec(html)?.[1] || ''),
+      eyebrow: flat(/<p class="eyebrow">([\s\S]*?)<\/p>/.exec(html)?.[1] || ''),
+      minutes: /(\d+)\s*分钟阅读/.exec(html)?.[1],
+      pager: [...html.matchAll(/<a[^>]*href="([\w-]+\.html)"[^>]*>\s*<span>[^<]*<\/span>\s*<strong>([\s\S]*?)<\/strong>/g)].map(
+        ([, href, label]) => ({ href, label: flat(label) })
+      ),
+    };
+  };
+
+  check('the index lists every post', entries.length === postFiles.length,
+    `${entries.length} listed / ${postFiles.length} in posts/`);
+  const orphans = postFiles.filter((f) => !entries.some((e) => e.file === f));
+  check('no post is missing from the index', orphans.length === 0, orphans.join(', '));
+  check('the index links to real files', entries.every((e) => existsSync(path.join(ROOT, 'posts', e.file))),
+    entries.map((e) => e.file).join(', '));
+
+  const metaDrift = [];
+  for (const entry of entries.filter((e) => existsSync(path.join(ROOT, 'posts', e.file)))) {
+    const p = page(entry.file);
+    if (p.h1 !== entry.title) metaDrift.push(`${entry.file}: 索引「${entry.title}」≠ 正文「${p.h1}」`);
+    if (!p.eyebrow.includes(entry.date)) metaDrift.push(`${entry.file}: 索引日期 ${entry.date} ≠ 页眉「${p.eyebrow}」`);
+    if (!p.eyebrow.includes(entry.tag)) metaDrift.push(`${entry.file}: 索引标签 ${entry.tag} ≠ 页眉「${p.eyebrow}」`);
+    if (p.minutes !== entry.minutes) metaDrift.push(`${entry.file}: 索引 ${entry.minutes} 分钟 ≠ 正文 ${p.minutes} 分钟`);
+  }
+  check('index metadata matches the articles', metaDrift.length === 0, metaDrift.slice(0, 3).join(' | '));
+
+  const pagerDrift = [];
+  for (const file of postFiles) {
+    for (const link of page(file).pager) {
+      if (!postFiles.includes(link.href)) {
+        pagerDrift.push(`${file}: 断链 ${link.href}`);
+        continue;
+      }
+      const target = page(link.href).h1;
+      if (target !== link.label) pagerDrift.push(`${file}: 「${link.label}」≠ ${link.href}「${target}」`);
+    }
+  }
+  check('上一页 / 下一页 point at the right titles', pagerDrift.length === 0, pagerDrift.slice(0, 3).join(' | '));
+
+  /* every local href/src must resolve, so a renamed page can never rot quietly */
+  const broken = [];
+  for (const file of ['index.html', 'about.html', '404.html', ...postFiles.map((f) => `posts/${f}`)]) {
+    if (!existsSync(path.join(ROOT, file))) {
+      broken.push(`${file}: 文件不存在`);
+      continue;
+    }
+    const dir = path.posix.dirname(file);
+    for (const [, ref] of readPage(file).matchAll(/(?:href|src)="([^"]+)"/g)) {
+      if (/^(?:https?:|mailto:|data:|javascript:|\/\/|#)/.test(ref)) continue;
+      const target = ref.split(/[?#]/)[0];
+      if (!target || !existsSync(path.join(ROOT, path.posix.normalize(path.posix.join(dir, target))))) {
+        broken.push(`${file} → ${ref}`);
+      }
+    }
+  }
+  check('no broken local links or assets', broken.length === 0, broken.slice(0, 4).join(' | '));
+
+  const sitemap = existsSync(path.join(ROOT, 'sitemap.xml')) ? readPage('sitemap.xml') : '';
+  const sitemapPages = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc]) => {
+    const tail = loc.replace(/^https?:\/\/[^/]+\//, '').replace(/^terra-dusk-site\/?/, '').replace(/\/$/, '');
+    return tail === '' ? 'index.html' : tail;
+  });
+  const unpublished = ['index.html', 'about.html', ...postFiles.map((f) => `posts/${f}`)].filter(
+    (p) => !sitemapPages.includes(p)
+  );
+  check('sitemap covers every published page', sitemapPages.length > 0 && unpublished.length === 0,
+    unpublished.join(', ') || `${sitemapPages.length} urls`);
 
   /* ---------- console ---------- */
   check('no console errors', consoleErrors.length === 0, consoleErrors.slice(0, 2).join(' | '));
