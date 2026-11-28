@@ -848,7 +848,7 @@ node check.mjs            # 只看结果
 node check.mjs --verbose  # 附带每项的实测数字
 ```
 
-需要 **Node 20+** 和本机的 Chrome/Chromium。Chrome 不在默认位置的话：
+需要 **Node 22+**（脚本用了全局 `WebSocket`）和本机的 Chrome/Chromium。Chrome 不在默认位置的话：
 
 ```bash
 CHROME="/path/to/chrome" node check.mjs --verbose

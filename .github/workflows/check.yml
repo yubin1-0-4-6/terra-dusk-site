@@ -17,7 +17,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # check.mjs 用全局 WebSocket 连 DevTools，Node 22 起才是默认可用
+          node-version: 22
 
       # ubuntu 镜像自带 Google Chrome，check.mjs 直接用它，不需要 npm 依赖
       - name: smoke test

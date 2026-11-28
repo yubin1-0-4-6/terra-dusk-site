@@ -36,7 +36,7 @@ python -m http.server 4173 --bind 127.0.0.1
 node check.mjs --verbose
 ```
 
-需要 Node 20+ 和本机 Chrome（用 `CHROME=/path/to/chrome` 指定别的浏览器）。脚本会自己起一个随机端口的静态服务器，用无头 Chrome 跑完地球、标签筛选、阅读进度、昆明光点的悬停/拖拽/回正、390px 移动端布局，以及无 WebGL 时的降级路径；随后离线交叉检查页面之间的一致性——索引里的标题/日期/标签/分钟数与正文是否一致、上一篇下一篇是否指向正确的标题、有没有死链、sitemap 是否覆盖全部页面。
+需要 Node 22+ 和本机 Chrome（用 `CHROME=/path/to/chrome` 指定别的浏览器）。脚本会自己起一个随机端口的静态服务器，用无头 Chrome 跑完地球、标签筛选、阅读进度、昆明光点的悬停/拖拽/回正、390px 移动端布局，以及无 WebGL 时的降级路径；随后离线交叉检查页面之间的一致性——索引里的标题/日期/标签/分钟数与正文是否一致、上一篇下一篇是否指向正确的标题、有没有死链、sitemap 是否覆盖全部页面。
 
 推送到 `main` 时 GitHub Actions 会自动跑同一份脚本（`.github/workflows/check.yml`）。
 

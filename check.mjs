@@ -7,7 +7,8 @@
   degraded path when the browser has no WebGL at all.
 
   Usage:  node check.mjs [--verbose]
-  Needs:  Node 20+ and a local Chrome/Chromium (set CHROME=/path/to/binary).
+  Needs:  Node 22+ (for the global WebSocket) and a local Chrome/Chromium
+          (set CHROME=/path/to/binary).
   No npm packages, no running server: it starts its own on a random port.
 */
 import http from 'node:http';
